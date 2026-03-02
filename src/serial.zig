@@ -295,12 +295,14 @@ const WindowsInformationIterator = struct {
                 var local_buffer: [256:0]u8 = std.mem.zeroes([256:0]u8);
 
                 if (CM_Get_Parent(&parent_id, child_inst, 0) != 0) return error.WindowsError;
-                if (CM_Get_Device_IDA(parent_id, @ptrCast(&local_buffer), 256, 0) != 0) return error.WindowsError;
+                if (CM_Get_Device_IDA(parent_id, @ptrCast(&local_buffer), local_buffer.len, 0) != 0) return error.WindowsError;
                 defer child_inst = parent_id;
 
-                if (!std.mem.containsAtLeast(u8, local_buffer[0..255], 1, vidpid_slice)) continue;
+                const hwidlen = std.mem.indexOfSentinel(u8, 0, &local_buffer);
+                const hwid = local_buffer[0..hwidlen];
+                if (!std.mem.containsAtLeast(u8, hwid, 1, vidpid_slice)) continue;
 
-                const length = try parseSerialNumber(local_buffer[0..255], serial_number);
+                const length = try parseSerialNumber(hwid, serial_number);
                 if (length > 0) return length;
             }
         }
