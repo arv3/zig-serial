@@ -198,13 +198,14 @@ const WindowsInformationIterator = struct {
             self.device_info_set,
             &device_info_data,
             @ptrCast(&self.hw_id),
-            255,
+            self.hw_id.len - 1,
             null,
         ) == std.os.windows.TRUE) {
             length = @as(u32, @truncate(std.mem.indexOfSentinel(u8, 0, &self.hw_id)));
-            info.hw_id = self.hw_id[0..length];
+            const id = self.hw_id[0..length];
+            info.hw_id = id;
 
-            length = parseSerialNumber(&self.hw_id, &self.serial_buffer) catch 0;
+            length = parseSerialNumber(id, &self.serial_buffer) catch 0;
             if (length == 0) {
                 length = getParentSerialNumber(device_info_data.devInst, &self.hw_id, &self.serial_buffer) catch 0;
             }
