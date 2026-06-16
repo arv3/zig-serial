@@ -920,6 +920,7 @@ pub fn configureSerialPort(port: std.Io.File, config: SerialConfig) !void {
             settings.oflag = .{};
             settings.lflag = .{};
 
+            const c = @cImport({ @cInclude("termios.h"); });
             settings.cc[c.VSTOP] = 0x13; // XOFF
             settings.cc[c.VSTART] = 0x11; // XON
             if (config.timeout_ms) |timeout| {
