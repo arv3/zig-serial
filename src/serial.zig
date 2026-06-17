@@ -841,7 +841,7 @@ pub fn configureSerialPort(port: std.Io.File, config: SerialConfig) !void {
             if (config.timeout_ms) |timeout| {
             	var timeouts = COMMTIMEOUTS{};
                 timeouts.ReadTotalTimeoutConstant = timeout;
-	            if (SetCommTimeouts(port.handle, &timeouts) == 0)
+	            if (SetCommTimeouts(port.handle, &timeouts) == std.os.windows.BOOL.FALSE)
 	                return error.WindowsError;
             }
         },
