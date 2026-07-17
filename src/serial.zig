@@ -788,6 +788,11 @@ const CBAUD = 0o000000010017; //Baud speed mask (not in POSIX).
 const CMSPAR = 0o010000000000;
 const CRTSCTS = 0o020000000000;
 
+
+fn set_cc(t: *std.posix.termios, cc: std.posix.V, value: std.posix.cc_t) void {
+	t.cc[@intFromEnum(cc)] = value;
+}
+
 /// This function configures a serial port with the given config.
 /// `port` is an already opened serial port, on windows these
 /// are either called `\\.\COMxx\` or `COMx`, on unixes the serial
@@ -920,19 +925,17 @@ pub fn configureSerialPort(port: std.Io.File, config: SerialConfig) !void {
             settings.oflag = .{};
             settings.lflag = .{};
 
-            const c = @cImport({ @cInclude("termios.h"); });
-            settings.cc[c.VSTOP] = 0x13; // XOFF
-            settings.cc[c.VSTART] = 0x11; // XON
+            set_cc(&settings, .STOP, 0x13);	// XOFF
+            set_cc(&settings, .START, 0x11);	// XOFF
             if (config.timeout_ms) |timeout| {
-	            const tenths = timeout / 100;
-	            if(tenths == 0) return error.UnsupportedTimeout;
-	            settings.cc[c.VTIME] = if(tenths < 256) @intCast(tenths) else return error.UnsupportedTimeout;
-				settings.cc[c.VMIN] = 0;
+                const tenths = timeout / 100;
+                if(tenths == 0) return error.UnsupportedTimeout;
+                set_cc(&settings, .TIME, if(tenths < 256) @intCast(tenths) else return error.UnsupportedTimeout);
+                set_cc(&settings, .MIN, 0);
             }
             else {
-
-                settings.cc[c.VTIME] = 0;
-                settings.cc[c.VMIN] = 1;
+	            set_cc(&settings, .TIME, 0);
+	            set_cc(&settings, .MIN, 1);
             }
 
             try std.posix.tcsetattr(port.handle, .NOW, settings);
